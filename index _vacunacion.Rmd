@@ -1,0 +1,60 @@
+---
+title: "Taller en Ingeniería Geográfica"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(leaflet)
+library(leaflet.extras)
+library(sf)
+library(cptcity)
+library(htmlwidgets)
+library(htmltools)
+library(plotly)
+```
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Mapa web
+
+```{r}
+data <- read_csv(
+  'https://www.datosabiertos.gob.pe/node/8298/download',
+  show_col_types = FALSE #PARA MOSTRAR INFO DE LA DATA
+  ) 
+data_corregida <- data %>% 
+  filter(((longitud <= -60 & longitud>= -90) & (latitud <=0 & latitud >=-20))) %>% 
+  st_as_sf(coords = c('longitud','latitud'), crs=4326)
+
+data_corregida %>% 
+  leaflet() %>% 
+  addTiles() %>% 
+  addHeatmap(radius = 6) %>% 
+  addMiniMap(height = 50, width = 50) %>% 
+  addResetMapButton()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+p = data_corregida %>% count(entidad_administra, sort = TRUE) %>% 
+  filter(!is.na(entidad_administra)) %>% head(5)
+
+p1 = p %>% 
+  ggplot(aes(x = reorder(entidad_administra,n), y = n, fill = n)) +
+  scale_fill_gradientn(colours = cpt(pal = "mpl_viridis"))+
+  geom_bar(stat = 'identity')+
+  coord_flip()+
+  theme_minimal()
+ggplotly(p1)
+```
+
+
+
